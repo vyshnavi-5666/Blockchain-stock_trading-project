@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
+</head>
+
+<body onload="init()">
+
+<h2>Your Portfolio</h2>
+<div id="portfolio"></div>
+
+<script src="app.js"></script>
+
+<script>
+let web3;
+let contract;
+
+async function init() {
+  if (window.ethereum) {
+    web3 = new Web3(window.ethereum);
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+
+    contract = new web3.eth.Contract(abi, contractAddress);
+
+    // Load initially
+    loadPortfolio();
+
+    // ✅ Live updates via blockchain events
+    contract.events.TradeExecuted()
+      .on("data", () => {
+        loadPortfolio();
+      })
+      .on("error", console.error);
+
+    // Optional fallback refresh
+    setInterval(loadPortfolio, 5000);
+
+  } else {
+    alert("Install MetaMask");
+  }
+}
+
+async function loadPortfolio() {
+
+  const accounts = await web3.eth.getAccounts();
+  const trades = await contract.methods.getTrades().call({ from: accounts[0] });
+
+  const res = await fetch("http://localhost:5000/api/stocks");
+  const stocks = await res.json();
+
+  const priceMap = {};
+  stocks.forEach(s => priceMap[s.name] = s.price);
+
+  const portfolio = {};
+
+  trades.forEach(t => {
+
+    if (!portfolio[t.stock]) {
+      portfolio[t.stock] = {
+        buyQty: 0,
+        sellQty: 0,
+        buyValue: 0
+      };
+    }
+
+    const price = priceMap[t.stock] || 0;
+
+    if (t.isBuy) {
+      portfolio[t.stock].buyQty += parseInt(t.quantity);
+      portfolio[t.stock].buyValue += price * t.quantity;
+    } else {
+      portfolio[t.stock].sellQty += parseInt(t.quantity);
+    }
+  });
+
+  const container = document.getElementById("portfolio");
+
+  let html = `
+    <table border="1" cellpadding="10">
+      <tr>
+        <th>Stock</th>
+        <th>Net Qty</th>
+        <th>Avg Buy</th>
+        <th>Current Price</th>
+        <th>P/L</th>
+      </tr>
+  `;
+
+  for (let stock in portfolio) {
+
+    const data = portfolio[stock];
+
+    const net = data.buyQty - data.sellQty;
+    const currentPrice = priceMap[stock] || 0;
+
+    const avgBuy = data.buyQty > 0
+      ? data.buyValue / data.buyQty
+      : 0;
+
+    const pl = (currentPrice - avgBuy) * net;
+
+    html += `
+      <tr>
+        <td>${stock}</td>
+        <td>${net}</td>
+        <td>${avgBuy.toFixed(2)}</td>
+        <td>${currentPrice}</td>
+        <td style="color:${pl >= 0 ? 'lightgreen' : 'red'}">
+          ₹${pl.toFixed(2)}
+        </td>
+      </tr>
+    `;
+  }
+
+  html += "</table>";
+
+  container.innerHTML = html;
+}
+</script>
+
+</body>
+</html>

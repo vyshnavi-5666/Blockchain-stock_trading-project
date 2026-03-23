@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body onload="initApp()">
+
+<!-- TOP NAVBAR -->
+<div class="navbar">
+  <h2>💹 Stock Trading DApp</h2>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <button onclick="showSection('stocks')">📊 Stocks</button>
+    <button onclick="showSection('portfolio')">💼 Portfolio</button>
+    <button onclick="showSection('popular')">🔥 Most Bought</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <div id="stocksSection">
+      <h2>Market</h2>
+      <h3 id="balance">Balance: ₹1000</h3>
+      <div id="stocks" class="grid"></div>
+    </div>
+
+    <div id="portfolioSection" class="hidden">
+      <h2>Your Portfolio</h2>
+      <div id="portfolio"></div>
+    </div>
+
+    <div id="popularSection" class="hidden">
+      <h2>Most Bought Stocks</h2>
+      <div id="popular"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="popup" class="modal hidden">
+  <div class="modal-content">
+    <h3 id="stockName"></h3>
+    <input id="qty" placeholder="Quantity"><br>
+    <button onclick="buy()">Buy</button>
+    <button onclick="sell()">Sell</button>
+    <button onclick="closePopup()">Close</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
